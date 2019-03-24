@@ -1,0 +1,7 @@
+//服务层
+app.service('seckillOrderService', function ($http) {
+    //提交订单
+    this.saveSeckillOrder = function (seckillId) {
+        return $http.get("/seckillOrder/saveSeckillOrder?seckillId=" + seckillId)
+    }
+});

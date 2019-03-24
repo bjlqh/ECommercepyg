@@ -1,0 +1,152 @@
+//控制层
+app.controller('seckillGoodsController', function ($scope, $controller, $location, $interval, seckillGoodsService, seckillOrderService) {
+
+    $controller('baseController', {$scope: $scope});//继承
+
+    //读取列表数据绑定到表单中  
+    $scope.findAll = function () {
+        seckillGoodsService.findAll().success(
+            function (response) {
+                $scope.list = response;
+            }
+        );
+    }
+
+    //分页
+    $scope.findPage = function (page, rows) {
+        seckillGoodsService.findPage(page, rows).success(
+            function (response) {
+                $scope.list = response.rows;
+                $scope.paginationConf.totalItems = response.total;//更新总记录数
+            }
+        );
+    }
+
+    //保存
+    $scope.save = function () {
+        var serviceObject;//服务层对象
+        if ($scope.entity.id != null) {//如果有ID
+            serviceObject = seckillGoodsService.update($scope.entity); //修改
+        } else {
+            serviceObject = seckillGoodsService.add($scope.entity);//增加
+        }
+        serviceObject.success(
+            function (response) {
+                if (response.success) {
+                    //重新查询
+                    $scope.reloadList();//重新加载
+                } else {
+                    alert(response.message);
+                }
+            }
+        );
+    }
+
+
+    //批量删除
+    $scope.dele = function () {
+        //获取选中的复选框
+        seckillGoodsService.dele($scope.selectIds).success(
+            function (response) {
+                if (response.success) {
+                    $scope.reloadList();//刷新列表
+                }
+            }
+        );
+    }
+
+    $scope.searchEntity = {};//定义搜索对象
+
+    //搜索
+    $scope.search = function (page, rows) {
+        seckillGoodsService.search(page, rows, $scope.searchEntity).success(
+            function (response) {
+                $scope.list = response.rows;
+                $scope.paginationConf.totalItems = response.total;//更新总记录数
+            }
+        );
+    }
+    //获取缓存中所有的秒杀商品列表
+    $scope.findSeckillGoodsList = function () {
+        seckillGoodsService.findSeckillGoodsList().success(function (response) {
+            $scope.list = response;
+        })
+    }
+
+    //根据id查找商品详情
+    $scope.seckillGoodsId = $location.search()["seckillId"];
+    //查询实体
+    $scope.findOne = function () {
+        if ($scope.seckillGoodsId > 0) {
+            seckillGoodsService.findOne($scope.seckillGoodsId).success(
+                function (response) {
+                    $scope.entity = response;
+
+                    //秒杀倒计时
+                    //1.计算出剩余时间(毫秒)
+                    var endTime = new Date(response.endTime).getTime();
+                    var nowTime = new Date().getTime();
+                    $scope.secondes = Math.floor((endTime - nowTime) / 1000);
+
+                    /**
+                     * $interval(执行函数,间隔的毫秒数,运行次数[可缺省])
+                     * $interval.cancel(time) 取消指定的定时器
+                     */
+                        //2.定义定时器倒计时
+                    var time = $interval(function () {
+                            if ($scope.secondes > 0) {
+                                //时间递减
+                                $scope.secondes = $scope.secondes - 1;
+                                //时间格式化
+                                $scope.timeString = $scope.convertTimeString($scope.secondes);
+                            } else {
+                                $interval.cancel(time)
+                            }
+                        }, 1000)
+                }
+            );
+        } else {
+            alert("商品已不存在")
+        }
+    };
+
+    //时间格式化
+    $scope.convertTimeString = function (allsecondes) {
+        //计算剩余天数
+        var days = Math.floor(allsecondes / 86400);
+        //计算剩余小时
+        var hours = Math.floor((allsecondes - days * 86400) / 3600);
+        //计算剩余分钟
+        var mins = Math.floor((allsecondes - days * 86400 - hours * 3600) / 60);
+        //计算剩余秒数
+        var seconds = allsecondes - days * 86400 - hours * 3600 - mins * 60;
+
+        //拼接时间
+        var timeString = "";
+        if (days > 0) {
+            timeString = days + "天";
+        }
+        if (hours < 10) {
+            hours = "0" + hours;
+        }
+        if (mins < 10) {
+            mins = "0" + mins;
+        }
+        if (seconds < 10) {
+            seconds = "0" + seconds;
+        }
+        return timeString += hours + ":" + mins + ":" + seconds;
+    };
+
+    //提交订单
+    $scope.saveSeckillOrder = function () {
+        seckillOrderService.saveSeckillOrder($scope.seckillGoodsId).success(function (response) {
+            alert(111111);
+            if (response.success) {
+                //先跳转到支付页面,支付完成后填写收货人地址
+                location.href = "pay.html";
+            }
+        })
+    }
+
+});

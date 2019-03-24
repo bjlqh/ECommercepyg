@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+
+        http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder location="classpath*:config/*.properties"></context:property-placeholder>
+    <!--分布式id生成器工具类-->
+    <bean id="idWorker" class="com.pinyougou.utils.IdWorker"></bean>
+
+    <!--dubbo协议端口号 默认端口号：20880-->
+    <dubbo:protocol name="dubbo" port="20889"></dubbo:protocol>
+    <!--发布服务项目名称-->
+    <dubbo:application name="pinyougou_seckill_service"/>
+    <!--zookeeper注册中心连接地址-->
+    <dubbo:registry address="zookeeper://192.168.25.128:2181"/>
+    <!--扫描包结构，完成服务的注册操作-->
+    <dubbo:annotation package="com.pinyougou.seckill.service.impl"/>
+    <dubbo:provider timeout="50000"/>
+
+    <!--配置线程池-->
+    <bean id="executor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+        <!--核心线程数-->
+        <property name="corePoolSize" value="10"></property>
+        <!--最大线程数-->
+        <property name="maxPoolSize" value="50"></property>
+        <!--队列最大长度-->
+        <property name="queueCapacity" value="1000"></property>
+        <!--线程池维护线程所允许的空闲时间-->
+        <property name="keepAliveSeconds" value="300"></property>
+        <!--无线程可用的处理策略 abortPolicy,CallerRunsPolicy(默认)-->
+        <property name="rejectedExecutionHandler">
+            <bean class="java.util.concurrent.ThreadPoolExecutor$CallerRunsPolicy"></bean>
+        </property>
+    </bean>
+
+</beans>

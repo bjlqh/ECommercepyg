@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--sql配置文件的约束 -->
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pinyougou.mapper.BrandDao">
+    <select id="findAll" resultType="tbBrand">
+        select id,name,first_char firstChar from tb_brand
+    </select>
+    <select id="findAllBrand" resultType="tbBrand" parameterType="tbBrand">
+        select id,name,first_char firstChar from tb_brand
+        <where>
+            <if test="name!=null and name.trim()!=''">
+                and name like '%${name}%'
+            </if>
+            <if test="firstChar!=null and firstChar!=''">
+                and first_char=#{firstChar}
+            </if>
+        </where>
+    </select>
+    <select id="selectBrandList" resultType="java.util.Map">
+        select id,name text,first_char firstChar from tb_brand
+    </select>
+
+    <insert id="addBrand" parameterType="tbBrand">
+          insert into tb_brand values(null,#{name},#{firstChar})
+    </insert>
+
+    <update id="updateBrand" parameterType="tbBrand">
+          update tb_brand set name=#{name},first_char=#{firstChar} where id=#{id}
+    </update>
+
+    <select id="findById" parameterType="int" resultType="tbBrand">
+          select id,name,first_char firstChar from tb_brand where id=#{id}
+    </select>
+
+    <delete id="delete" parameterType="int">
+          delete from tb_brand where id=#{id}
+    </delete>
+</mapper>
